@@ -48,15 +48,14 @@ function checkConfig() {
 // }
     return apiCall('/config', 'GET').then((response) => {
         const fetchedConfig = response.data;
-        console.log(fetchedConfig);
-        console.log(fetchedConfig);
-        if (fetchedConfig === false) {
+        if (fetchedConfig === null) {
             // The fetched config is an empty object, return false
+            // delete config from the local storage so it won't be shown in the form
+            localStorage.removeItem('config');
             return false;
         }
         // The fetched config is not an empty object, save it and return true
         localStorage.setItem('config', JSON.stringify(fetchedConfig));
-        console.log(fetchedConfig);
         return true;
     }
     )
@@ -71,7 +70,7 @@ function checkConfig() {
 
 export default function Hello() {
     const [isConfigValid, setConfigValid] = useState(null);
-  const [colorScheme, setColorScheme] = useState<any>('light');
+    const [colorScheme, setColorScheme] = useState<any>('light');
 
     useEffect(() => {
         checkConfig().then((isValid) => {
@@ -83,9 +82,9 @@ export default function Hello() {
         return <div>Loading...</div>;
     }
 
-  const toggleTheme = () => {
-    setColorScheme(colorScheme === 'dark' ? 'light' : 'dark');
-  };
+    const toggleTheme = () => {
+        setColorScheme(colorScheme === 'dark' ? 'light' : 'dark');
+    };
 
     return (
         <div>
@@ -95,12 +94,11 @@ export default function Hello() {
                     <Router>
                         <HeaderResponsive links={randomLinks}/>
                         <Routes>
-                            <Route path="/" element={isConfigValid ? <GettingStarted/> : <Config/>}/>
+                            <Route path="/" element={isConfigValid ? <GettingStarted/> : <Config setConfigValid={setConfigValid} />}/>
                             <Route path="/upload" element={<Upload/>}/>
                             <Route path="/chat" element={<Chat/>}/>
-                            <Route path="/config" element={<Config/>}/>
+                            <Route path="/config" element={<Config setConfigValid={setConfigValid} />}/>
                             <Route path="/summary" element={<Summary/>}/>
-
                         </Routes>
                         <Footer toggleTheme={toggleTheme} colorScheme={colorScheme}/>
                     </Router>

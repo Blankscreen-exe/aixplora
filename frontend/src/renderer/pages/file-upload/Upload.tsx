@@ -15,6 +15,25 @@ export function Upload() {
     // React state to store the files
     const [files, setFiles] = useState<FileData[]>([]);
 
+    // Callback function to update the files state when files are added in the Dropzone and Urlloader component
+    const handleFilesUploaded = (uploadedFiles: (File[] | string[])) => {
+        const newFiles: FileData[] = uploadedFiles.map((item) => {
+            if (typeof item === 'string') {
+                // Convert string to FileData object
+                return {
+                    name: item,
+                    type: 'website', 
+                    size: 0  // Placeholder
+                };
+            } else {
+                // If it's already a FileData object, keep it as is
+                return item;
+            }
+        });
+
+        setFiles((prevFiles) => [...prevFiles, ...newFiles]);
+    };
+
     // useEffect(() => { // Using useEffect hook to call API on component mount
     //     axios.get<FileData[]>(`${config.REACT_APP_BACKEND_URL}/files`)
     //         .then((response) => {
@@ -30,11 +49,14 @@ export function Upload() {
     // }, []); // The empty array makes this run on mount only
 
     useEffect(() => {
-        apiCall('/files', 'GET').then((response) => {
+        apiCall('/files/', 'GET').then((response) => {
             const fetchedFiles = response.data;
             console.log(fetchedFiles);
+            console.log('feched');
             if (fetchedFiles.length > 0) {
                 setFiles(fetchedFiles); // Setting state when data is fetched
+                console.log("saved files");
+                console.log(files);
             }
         })
         .catch((error) => {
@@ -45,11 +67,13 @@ export function Upload() {
 
     return (
         <div style={{marginTop: '-100px'}}>
-            <Urlloader/>
-            <DropzoneButton/>
+            <Urlloader onFilesUploaded={handleFilesUploaded}/>
+            <DropzoneButton onFilesUploaded={handleFilesUploaded}/> 
             <UploadedTable data={files}/>
         </div>
     );
 }
 
 export default Upload;
+
+

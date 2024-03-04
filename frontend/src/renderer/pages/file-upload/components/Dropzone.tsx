@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Text,
   Group,
@@ -11,18 +11,20 @@ import { Dropzone } from '@mantine/dropzone';
 import { IconCloudUpload, IconX, IconDownload } from '@tabler/icons-react';
 import {apiCall} from "../../../utils/api";
 
+import { Notifications } from '@mantine/notifications';
+
 const useStyles = createStyles((theme) => ({
   // Styles definition here
 }));
 
-export function DropzoneButton() {
+
+
+export function DropzoneButton({ onFilesUploaded }: { onFilesUploaded: (uploadedFiles: File[]) => void }) {
   const { classes, theme } = useStyles();
   const openRef = useRef();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  useEffect(() => {
-    console.log(selectedFiles);
-  }, [selectedFiles]);
+  
 
   const handleFileDrop = async (files: File[]) => {
     const isSelected = selectedFiles.find((f) => f.name === files[0].name);
@@ -53,7 +55,7 @@ export function DropzoneButton() {
       //     // Handle API request error
       //     console.error(error);
       //   });
-      apiCall('/files', 'POST', formData, {
+      apiCall('/files/', 'POST', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -61,7 +63,15 @@ export function DropzoneButton() {
         .then((response) => {
             // Handle API response data
             console.log(response.data);
-            window.location.reload();
+            Notifications.show({
+              title: 'File Upload Successful',
+              message: 'The file was successfully uploaded.',
+              color: 'green'
+            });
+            
+            onFilesUploaded(selectedFiles); // Call the callback function to update the state in the Upload.tsx component
+            setSelectedFiles([]); 
+
         })
         .catch((error) => {
             // Handle API request error

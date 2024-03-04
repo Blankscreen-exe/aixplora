@@ -1,6 +1,6 @@
 import {useForm} from '@mantine/form';
+import {useEffect, useState} from 'react'; // Combine imports of 'useEffect' and 'useState'
 import {TextInput, Button, Box, Drawer, Avatar, Text, Group, Select, Tooltip} from '@mantine/core';
-import {config} from '../../config.js';
 import {IconDatabase} from '@tabler/icons-react';
 import {useDisclosure} from '@mantine/hooks';
 import ExternalDb from './Externaldb';
@@ -8,38 +8,31 @@ import logo from '../../components/assets/AIxplora_logo_round.png';
 import {useSelector, useDispatch} from 'react-redux';
 import {connect, disconnect} from '../../store/slices/externalDbSlice';
 import {apiCall} from "../../utils/api";
-import {useState} from "react";
+import PromptConfiguration from "./PromptConfig";
+import {Notifications} from '@mantine/notifications';
+import {ErrorNotification} from "../../../renderer/components/ErrorNotification";
 
-
-function saveConfig(OPENAI_API_KEY: string, model: string, embeddingsmodel: string) {
+async function saveConfig(OPENAI_API_KEY, model, embeddingsmodel) {
     const payload = {
         apiKey: OPENAI_API_KEY,
         model: model,
         embeddingsModel: embeddingsmodel
     };
-//     return axios.post(`${config.REACT_APP_BACKEND_URL}/config`, payload)
-//         .then((response) => {
-//             const fetchedConfig = response.data;
-//
-//             if (Object.keys(fetchedConfig).length === 0) {
-//                 return false;
-//             }
-//
-//             // The fetched config is not an empty object, save it and return true
-//             localStorage.setItem('config', JSON.stringify(fetchedConfig));
-//             console.log(fetchedConfig);
-//             window.location.reload();
-//
-//             return true;
-//         })
-//         .catch((error) => {
-//             console.log('Error fetching config:', error);
-//             return false;
-//         });
-// }
-    return apiCall('/config', 'POST', payload).then((response) => {
-            const fetchedConfig = response.data;
-            console.log(fetchedConfig);
+
+    try {
+        // Validate API key
+        const apiKeyValidationResponse = await apiCall('/config/validate-api-key', 'POST', payload);
+
+        if (apiKeyValidationResponse?.data.validApiKey === false) {
+            ErrorNotification('/config/validate-api-key', 'POST', apiKeyValidationResponse?.data.message, 'Invalid OpenAI API Key');
+            return false;
+        }
+
+        // If the API key is valid, proceed to save the configuration
+        const configSaveResponse = await apiCall('/config', 'POST', payload);
+
+        if (configSaveResponse) {
+            const fetchedConfig = configSaveResponse.data;
 
             if (Object.keys(fetchedConfig).length === 0) {
                 return false;
@@ -47,24 +40,22 @@ function saveConfig(OPENAI_API_KEY: string, model: string, embeddingsmodel: stri
 
             // The fetched config is not an empty object, save it and return true
             localStorage.setItem('config', JSON.stringify(fetchedConfig));
-            console.log(fetchedConfig);
-            window.location.reload();
-
             return true;
+        } else {
+            console.log('Invalid response format:', configSaveResponse);
+            return false;
         }
-    )
-        .catch((error) => {
-                console.log('Error fetching config:', error);
-                return false;
-            }
-        );
+    } catch (error) {
+        console.log('Error during API calls:', error);
+        return false;
+    }
 }
 
-function Config() {
+function Config({setConfigValid}) {
     const isConnected = useSelector((state) => state.connectedExternalDb.value);
     const dispatch = useDispatch();
-    const [opened, {open, close}] = useDisclosure(false);
     const [focused, setFocused] = useState(false);
+    const [opened, setOpened] = useState(false);
 
 
     const form = useForm({
@@ -78,8 +69,6 @@ function Config() {
             OPENAI_API_KEY: (value, values) => {
                 const modelValue = values.model;
                 const embeddingsmodelValue = values.embeddingsmodel;
-                // Huggingface embeddings will activate huggingface embeddings to be completly independent of
-                // OpenAI. It's not implemented as of now 28.05.2023
                 if (embeddingsmodelValue.startsWith("text-")) {
                     return value.startsWith("sk-") ? null : "Invalid API Key";
                 }
@@ -90,23 +79,54 @@ function Config() {
         },
     });
 
+    // Load the saved configuration from the local storage
+    useEffect(() => {
+        try {
+            const savedConfig = JSON.parse(localStorage.getItem('config') || '{}');
+            form.setValues({
+                OPENAI_API_KEY: savedConfig.openai_api_key || savedConfig.apiKey || '',
+                model: savedConfig.model || '',
+                embeddingsmodel: savedConfig.embeddings_model || savedConfig.embeddingsModel || '',
+            });
+        } catch (error) {
+            console.error('Error parsing saved configuration:', error);
+        }
+    }, []);
 
-    const handleSuccess = (values) => {
-        console.log(values);
-        saveConfig(values.OPENAI_API_KEY, values.model, values.embeddingsmodel);
+    const handleSuccess = async (values) => {
+        const success = await saveConfig(values.OPENAI_API_KEY, values.model, values.embeddingsmodel);
+        if (success) {
+            Notifications.show({
+                title: 'Configuration Saved',
+                message: 'Your configuration has been saved successfully.',
+                color: 'green',
+            });
+        } else {
+            Notifications.show({
+                title: 'Configuration Error',
+                message: 'There was an error saving your configuration.',
+                color: 'red',
+            });
+        }
     };
 
     const handleFail = (errors) => {
         console.log(errors);
     };
 
+
+    const closeDrawer = () => {
+        setOpened(false);
+    };
+
     const handleClick = () => {
         if (isConnected) {
             dispatch(disconnect());
         } else {
-            open();
+            setOpened(true); // Open the drawer
         }
     };
+
 
     return (
         <Box maw={320} mx="auto">
@@ -124,7 +144,9 @@ function Config() {
                            onFocus={() => setFocused(true)}
                            onBlur={() => setFocused(false)}
                            inputContainer={(children) => (
-                               <Tooltip label="An OpenAI key is mandatory if you're using the text-embedding-ada-002 Embedding model" position="top-start" opened={focused}>
+                               <Tooltip
+                                   label="An OpenAI key is mandatory if you're using the text-embedding-ada-002 Embedding model"
+                                   position="top-start" opened={focused}>
                                    {children}
                                </Tooltip>
                            )}/>
@@ -158,13 +180,15 @@ function Config() {
                 </Button>
             </form>
             <br/>
-            <Drawer opened={opened} onClose={close} title="Authentication">
-                <ExternalDb/>
+            <Drawer opened={opened} onClose={() => setOpened(false)} title="Authentication">
+                <ExternalDb onClose={closeDrawer}/>
             </Drawer>
+
 
             <Button leftIcon={<IconDatabase size="1rem"/>} loaderPosition="right" onClick={handleClick}>
                 {isConnected ? "Connect Local-knowledge" : "Connect to database"}
             </Button>
+            <PromptConfiguration></PromptConfiguration>
         </Box>
     );
 }

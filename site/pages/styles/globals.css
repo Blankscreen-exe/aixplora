@@ -26,7 +26,30 @@ body {
     rgb(var(--background-start-rgb));
 }
 
-
+.btn_3 {
+    align-items: center;
+  background: linear-gradient(144deg, #f68a71, #d801d1 80%, #ec0505);
+  -webkit-text-color: transparent;
+  border: 0;
+  border-radius: 8px;
+  box-shadow: rgba(17, 31, 53, 255) 0 15px 30px -5px;
+  box-sizing: border-box;
+  color: #ffffff;
+  display: flex;
+  font-size: 18px;
+  justify-content: center;
+  line-height: 1em;
+  font-family: "Poppins", sans-serif;
+  min-width: 100px;
+  padding: 3px;
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.3s;
+}
 
 .btn_1 {
   align-items: center;
@@ -42,7 +65,6 @@ body {
   justify-content: center;
   line-height: 1em;
   font-family: "Poppins", sans-serif;
-  max-width: 100%;
   min-width: 100px;
   padding: 3px;
   text-decoration: none;
@@ -67,12 +89,25 @@ body {
   outline: 0;
 }
 
+/* Default styles: stacked buttons for small devices */
+.buttons {
+    flex-direction: column;
+    gap: 1rem; /* adjust vertical spacing for stacked buttons */
+}
+
+/* Media query for larger screens (e.g., tablets and desktops) */
+@media (min-width: 720px) { /* 640px is typically the breakpoint for medium screens in Tailwind */
+    .buttons {
+        flex-direction: row;
+        gap: 3rem; /* adjust horizontal spacing for side-by-side buttons */
+    }
+}
+
+
 button span {
   background-color: rgb(5, 6, 45);
   padding: 10px 20px;
   border-radius: 6px;
-  width: 100%;
-  height: 100%;
   transition: 300ms;
 }
 
@@ -96,16 +131,12 @@ button span {
   -webkit-text-fill-color: transparent;
 }
 .card {
-  width: 190px;
-  height: 254px;
   transition: all 0.2s;
   position: relative;
   cursor: pointer;
 }
 
 .card-inner {
-  width: inherit;
-  height: inherit;
   background: rgba(255, 255, 255, 0.05);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(10px);
@@ -126,7 +157,7 @@ button span {
   justify-content: center;
   line-height: 1em;
   font-family: "Poppins", sans-serif;
-  max-width: 100%;
+  width: 100%;
   padding: 3px;
   text-decoration: none;
   user-select: none;
@@ -148,16 +179,17 @@ button span {
   border-radius: 50%;
   position: absolute;
   animation: move-up6 2s ease-in infinite alternate-reverse;
+  overflow-x: hidden;
 }
 
 .circle:nth-child(1) {
-  top: -25px;
+  top: -35px;
   left: -25px;
 }
 
 .circle:nth-child(2) {
   bottom: -25px;
-  right: -25px;
+  right: -65px;
   animation-name: move-down1;
 }
 
@@ -286,13 +318,13 @@ button span {
 @media (max-width: 576px) {
 }
 
-@media (max-width: 768px) {
+/* @media (max-width: 768px) {
   #header{
     padding: 2em 2em;
   }
-}
+} */
 
-@media (max-width: 992px) {
+@media (max-width: 1200px) {
   .hero_intro_text {
     line-height: 1.3em;
   }
@@ -301,26 +333,15 @@ button span {
     flex-direction: column;
     align-items: center;
     gap: 3em;
-    padding: 0 2em;
-    width: 100%;
   }
+  
 
-  #header{
-    padding: 2em 2em;
-  }
-  .text {
-    width: 100%;
-  }
+  
   .hero_intro_text {
-    width: 100%;
     font-size: 34px;
   }
   .text-lg {
-    width: 100%;
     font-size: 16px;
-  }
-  header {
-    padding: 0.2em 2em;
   }
 }
 
@@ -331,19 +352,18 @@ button span {
   .text-lg {
     font-size: 18px;
   }
-  .hero {
-    padding: 0 8em;
-  }
-  .navbar {
-    padding: 2em 8em;
-  }
 }
 
-@media (max-width: 1701px) {
-  .hero {
-    padding: 0 10em;
-  }
-  .navbar {
-    padding: 2em 10em;
-  }
+
+
+.icon-button-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
+
+.icon-button-container svg {
+    width: 32px;
+    height: 32px;
+}
+
